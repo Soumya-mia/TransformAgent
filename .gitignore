@@ -1,0 +1,5 @@
+.env
+__pycache__/
+*.pyc
+*.db
+agent_memory.db
