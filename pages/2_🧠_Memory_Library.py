@@ -3,6 +3,18 @@ import pandas as pd
 import sqlite3
 
 st.set_page_config(page_title="Memory - TransformAgent", page_icon="🧠", layout="wide")
+st.markdown("""
+<style>
+    .stApp { background-color: #0e1117; }
+    div[data-testid="metric-container"] {
+        background-color: #1e2129;
+        border: 1px solid #2e3340;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    h1, h2, h3 { color: #ffffff !important; }
+</style>
+""", unsafe_allow_html=True)
 
 st.title("🧠 Success Case Library")
 st.markdown("The agent saves successful `(SQL, ORM)` translations to a local SQLite database. Next time a similar query is asked, it uses these past successes as few-shot prompts to increase accuracy.")

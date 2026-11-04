@@ -2,6 +2,18 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Analytics - TransformAgent", page_icon="📊", layout="wide")
+st.markdown("""
+<style>
+    .stApp { background-color: #0e1117; }
+    div[data-testid="metric-container"] {
+        background-color: #1e2129;
+        border: 1px solid #2e3340;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    h1, h2, h3 { color: #ffffff !important; }
+</style>
+""", unsafe_allow_html=True)
 
 st.title("📊 Performance Analytics")
 st.markdown("This page displays the metrics from our **Ablation Study**, proving the effectiveness of the Reflection Loop and Memory architecture.")
