@@ -16,35 +16,52 @@ from ta_core import models
 # 2. Load environment variables
 load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
-client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
 
-# 3. The Memory Layer (Success Case Library)
+client = OpenAI(
+    api_key=api_key, 
+    base_url="https://api.groq.com/openai/v1",
+    max_retries=5 
+)
+
+# 3. The Memory Layer (Thread-Safe)
 class AgentMemory:
     def __init__(self, db_path="agent_memory.db"):
-        self.conn = sqlite3.connect(db_path)
-        self.cursor = self.conn.cursor()
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS success_cases (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                sql TEXT UNIQUE,
-                orm TEXT
-            )
-        """)
-        self.conn.commit()
+        self.db_path = db_path
+        self._init_db()
+
+    def _init_db(self):
+        # Create a fresh connection just to set up the table
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS success_cases (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    sql TEXT UNIQUE,
+                    orm TEXT
+                )
+            """)
+            conn.commit()
 
     def add_success(self, sql, orm):
         try:
-            self.cursor.execute(
-                "INSERT OR REPLACE INTO success_cases (sql, orm) VALUES (?, ?)", 
-                (sql, orm)
-            )
-            self.conn.commit()
+            # Fresh connection for writing
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT OR REPLACE INTO success_cases (sql, orm) VALUES (?, ?)", 
+                    (sql, orm)
+                )
+                conn.commit()
         except Exception as e:
             print(f"Memory error: {e}")
 
     def get_recent_successes(self, limit=3):
-        self.cursor.execute("SELECT sql, orm FROM success_cases ORDER BY id DESC LIMIT ?", (limit,))
-        rows = self.cursor.fetchall()
+        # Fresh connection for reading
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT sql, orm FROM success_cases ORDER BY id DESC LIMIT ?", (limit,))
+            rows = cursor.fetchall()
+            
         if not rows:
             return ""
         
@@ -53,6 +70,7 @@ class AgentMemory:
             examples += f"SQL: {sql}\nORM: {orm}\n\n"
         return examples
 
+# Initialize memory
 memory = AgentMemory()
 
 # 4. Prompts

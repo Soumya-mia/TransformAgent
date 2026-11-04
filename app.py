@@ -1,38 +1,36 @@
 import streamlit as st
 import pandas as pd
+import time
 from engine import generate_orm, reflect_and_fix, run_sql, run_orm, compare, memory
 
+# Page Config MUST be the first Streamlit command
 st.set_page_config(page_title="TransformAgent", page_icon="🤖", layout="wide")
 
-st.title("🤖 TransformAgent")
-st.markdown("Convert SQL to Django ORM, verified by execution.")
+st.title("🤖 TransformAgent Playground")
+st.markdown("""
+Welcome to the **TransformAgent** interactive playground. 
+This tool uses a self-correcting LLM agent to translate raw SQL into verified Django ORM code. 
+*Type a SQL query below to see the agent generate code, test it, and fix its own bugs.*
+""")
 
-# Sidebar: Memory
-with st.sidebar:
-    st.header("🧠 Agent Memory")
-    st.markdown("The agent learns from every successful transformation.")
-    recent_memory = memory.get_recent_successes(limit=5)
-    if recent_memory:
-        st.code(recent_memory, language="text")
-    else:
-        st.info("Memory is empty. Run some queries to populate it!")
+st.divider()
 
-# Main Input
+# Main Input Area
 sql_input = st.text_area("Enter a SQL query:", height=100, placeholder="SELECT * FROM customer LIMIT 5;")
 
-if st.button("Transform & Verify", type="primary"):
+if st.button("🚀 Transform & Verify", type="primary"):
     if not sql_input.strip():
         st.warning("Please enter a SQL query.")
     else:
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("1. SQL Translation")
+            st.subheader("1. Generated ORM")
             orm_code = generate_orm(sql_input)
             st.code(orm_code, language="python")
             
         with col2:
-            st.subheader("2. Verification")
+            st.subheader("2. Verification Engine")
             
             max_retries = 2
             attempt = 0
@@ -73,6 +71,7 @@ if st.button("Transform & Verify", type="primary"):
                         status.update(label="❌ Failed after retries", state="error")
                     break
             
+            # Display Results
             if success:
                 st.subheader("Data Results")
                 df = pd.DataFrame(sql_rows)
